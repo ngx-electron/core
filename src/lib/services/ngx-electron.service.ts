@@ -88,24 +88,21 @@ export class NgxElectronService {
         return !!(window['process'] && window['process'].type);
     }
 
-
-
-
-    createWindow(routerUrl: string, key: string, options, created) {
+    createWindow(routerUrl: string, key: string, options: any, created: (win) => void) {
         let win = new this.remote.BrowserWindow({
             ...this.defaultWinOptions,
             ...options
         });
-        if (this.options.isDebugger) {
-            win.loadURL(`http://${ location.hostname }:${ location.port }/#${ routerUrl }`);
-            win.webContents.openDevTools();
-        } else {
-            win.loadURL(` ${ window['require']('url').format({
+        const url = this.isServer() ? `http://${ location.hostname }:${ location.port }/#${ routerUrl }` :
+            ` ${ window['require']('url').format({
                 pathname: window['require']('path').join(this.remote.app.getAppPath(),
                     `/dist/${ this.remote.app.getName() }/index.html`),
                 protocol: 'file:',
                 slashes: true
-            }) }#${ routerUrl }`);
+            }) }#${ routerUrl }`;
+        win.loadURL(url);
+        if (this.isOpenDevTools()) {
+            win.webContents.openDevTools();
         }
         if (this.isLoadElectronMain) {
             this.ipcRenderer.send('ngx-electron-win-created', key, win.id);
@@ -223,6 +220,10 @@ export class NgxElectronService {
 
     isServer() {
         return this.ipcRenderer.sendSync('ngx-electron-is-server');
+    }
+
+    isOpenDevTools() {
+        return this.ipcRenderer.sendSync('ngx-electron-is-open-dev-tools');
     }
 
     getPort() {

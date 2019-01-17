@@ -2,6 +2,7 @@
   "name": "@ngx-electron/core",
   "version": "0.0.1",
   "peerDependencies": {
+    "@ngx-electron/main": "0.0.1",
     "@angular/common": "^7.0.0",
     "@angular/core": "^7.0.0"
   }
