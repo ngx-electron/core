@@ -1,7 +1,6 @@
 import {Inject, Injectable, NgZone} from '@angular/core';
 // import {app, BrowserWindow, BrowserWindowConstructorOptions, IpcRenderer, Remote, WebFrame} from 'electron';
 import {Router} from '@angular/router';
-import {ElectronCoreOptions, OPTIONS} from '../ngx-electron-core.module';
 import {Observable} from 'rxjs';
 import {Tray} from '../models';
 
@@ -64,7 +63,6 @@ export class NgxElectronService {
     }
 
     constructor(private router: Router,
-                @Inject(OPTIONS) private options: ElectronCoreOptions,
                 private ngZone: NgZone) {
         // Conditional imports
         if (!this.isElectron()) {
