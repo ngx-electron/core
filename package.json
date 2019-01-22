@@ -1,9 +1,26 @@
 {
   "name": "@ngx-electron/core",
   "version": "0.0.1",
+  "author": {
+    "name": "liangshen001",
+    "email": "wangliang520wl@hotmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ngx-electron/core/issues"
+  },
+  "homepage": "https://github.com/ngx-electron/core#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ngx-electron/core.git"
+  },
   "peerDependencies": {
     "@ngx-electron/main": "0.0.1",
     "@angular/common": "^7.0.0",
     "@angular/core": "^7.0.0"
-  }
+  },
+  "keywords": [
+    "angular",
+    "electron"
+  ]
 }

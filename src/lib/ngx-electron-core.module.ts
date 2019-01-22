@@ -4,16 +4,6 @@ import {CommonModule} from '@angular/common';
 import {NgxElectronWindowComponent} from './components/ngx-electron-window/ngx-electron-window.component';
 import {NgxElectronService} from './services/ngx-electron.service';
 
-export const OPTIONS = new InjectionToken<string>('NGXELECTRONCOREOPTIONS');
-
-export interface ElectronCoreOptions {
-    isDebugger: boolean;
-    server?: {
-        localhost: string;
-        port: number;
-    };
-}
-
 @NgModule({
     imports: [
         CommonModule
@@ -28,11 +18,10 @@ export interface ElectronCoreOptions {
     ]
 })
 export class NgxElectronCoreModule {
-    static forRoot(options: ElectronCoreOptions = {isDebugger: false}): ModuleWithProviders {
+    static forRoot(): ModuleWithProviders {
         return {
             ngModule: NgxElectronCoreModule,
             providers: [
-                {provide: OPTIONS, useValue: options},
                 NgxElectronService
             ]
         };
