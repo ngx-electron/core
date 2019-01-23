@@ -120,9 +120,11 @@ export class NgxElectronService {
 
     send(data: any, ...idKeys: any[]) {
         if (this.isElectron()) {
+            console.log(`发送数据 data:${data}`);
             if (idKeys && idKeys.length) {
                 idKeys.filter(idKey => !!idKey)
                     .map(idKey => {
+                        console.log(`接收数据data 类型${typeof idKey} win ${idKey}`);
                         switch (typeof idKey) {
                             case 'string':
                                 return this.isLoadElectronMain && this.getWinIdByKey(idKey);
@@ -130,7 +132,7 @@ export class NgxElectronService {
                                 return idKey;
                             default: return null;
                         }
-                    }).filter(id => !!id)
+                    })
                     .map(id => this.remote.BrowserWindow.fromId(id))
                     .filter(win => !!win)
                     .forEach(win => win.webContents.send('ngx-electron-core-data', data));
@@ -199,7 +201,8 @@ export class NgxElectronService {
     data(): Observable<any> {
         return Observable.create(observer => {
             if (this.isElectron()) {
-                this.ipcRenderer.on('ngx-electron-core-data', (event, data) => observer.next(data));
+                this.ipcRenderer.on('ngx-electron-core-data',
+                    (event, data) => this.ngZone.run(() => setTimeout(() => observer.next(data))));
             }
         });
     }
