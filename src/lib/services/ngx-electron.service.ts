@@ -3,6 +3,9 @@ import {Inject, Injectable, NgZone} from '@angular/core';
 import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
 import {Tray} from '../models';
+import { IpcRenderer, webFrame, remote } from 'electron';
+import * as childProcess from 'child_process';
+import * as fs from 'fs';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting javascript file will look as if you never imported the module at all.
@@ -12,12 +15,12 @@ import {Tray} from '../models';
 })
 export class NgxElectronService {
 
-    ipcRenderer: any/*IpcRenderer*/;
-    webFrame: any/*WebFrame*/;
-    remote: any/*Remote*/;
+    ipcRenderer: IpcRenderer;
+    webFrame: typeof webFrame;
+    remote: typeof remote;
 
-    childProcess: any/*ChildProcess*/;
-    fs: any/*fs*/;
+    childProcess: typeof childProcess;
+    fs: typeof fs;
 
     defaultWinOptions = {
         hasShadow: true,
@@ -74,14 +77,12 @@ export class NgxElectronService {
         this.childProcess = window['require']('child_process');
         this.fs = window['require']('fs');
 
-        this.isLoadElectronMain = this.remote.ipcMain.listenerCount('ngx-electron-load-electron-main');
+        this.isLoadElectronMain = !!this.remote.ipcMain.listenerCount('ngx-electron-load-electron-main');
         this.ipcRenderer.on('ngx-electron-core-init-data', (event, initData) => this.initData = initData);
-        /**
-         * 判断是否加载了@ngx-electron/electron-main模块
-         * @return
-         */
     }
-
+    /**
+     * 判断是否加载了@ngx-electron/electron-main模块
+     */
     isElectron(): boolean {
         return !!(window['process'] && window['process'].type);
     }
@@ -220,31 +221,31 @@ export class NgxElectronService {
     }
 
     isServer() {
-        return this.ipcRenderer.sendSync('ngx-electron-is-server');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-is-server');
     }
 
     isOpenDevTools() {
-        return this.ipcRenderer.sendSync('ngx-electron-is-open-dev-tools');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-is-open-dev-tools');
     }
 
     getPort() {
-        return this.ipcRenderer.sendSync('ngx-electron-get-port');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-get-port');
     }
 
     getHost() {
-        return this.ipcRenderer.sendSync('ngx-electron-get-host');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-get-host');
     }
 
     isMac() {
-        return this.ipcRenderer.sendSync('ngx-electron-is-mac');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-is-mac');
     }
 
     isWindows() {
-        return this.ipcRenderer.sendSync('ngx-electron-is-windows');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-is-windows');
     }
 
     isLinux() {
-        return this.ipcRenderer.sendSync('ngx-electron-is-linux');
+        return this.isElectron() && this.ipcRenderer.sendSync('ngx-electron-is-linux');
     }
     /**
      * 设置tray菜单
