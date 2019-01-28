@@ -1,9 +1,8 @@
-import {Inject, Injectable, NgZone} from '@angular/core';
-// import {app, BrowserWindow, BrowserWindowConstructorOptions, IpcRenderer, Remote, WebFrame} from 'electron';
+import {Injectable, NgZone} from '@angular/core';
 import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
-import {Tray} from '../models';
-import { IpcRenderer, webFrame, remote } from 'electron';
+import {TrayProxy} from '../models';
+import {IpcRenderer, WebFrame, Remote, BrowserWindowConstructorOptions, MenuItemConstructorOptions} from 'electron';
 import * as childProcess from 'child_process';
 import * as fs from 'fs';
 
@@ -16,8 +15,8 @@ import * as fs from 'fs';
 export class NgxElectronService {
 
     ipcRenderer: IpcRenderer;
-    webFrame: typeof webFrame;
-    remote: typeof remote;
+    webFrame: WebFrame;
+    remote: Remote;
 
     childProcess: typeof childProcess;
     fs: typeof fs;
@@ -35,12 +34,12 @@ export class NgxElectronService {
 
     isLoadElectronMain: boolean;
 
-    _tray: Tray;
+    _tray: TrayProxy;
 
     get tray() {
         if (this._tray) {
             return this._tray;
-        } else if (this.remote.ipcMain.listenerCount('ngx-electron-tray-created')) {
+        } else if (this.isElectron() && this.remote.ipcMain.listenerCount('ngx-electron-tray-created')) {
             this._tray = {
                 on: (event: string, listener: any) => {
                     const timestamp = new Date().getTime();
@@ -56,7 +55,7 @@ export class NgxElectronService {
                 setHighlightMode: (mode: string) => this.ipcRenderer.send('ngx-electron-tray-apply-method', 'setHighlightMode', mode),
                 setTitle: (title) => this.ipcRenderer.send('ngx-electron-tray-apply-method', 'setTitle', title),
                 setToolTip: toolTip => this.ipcRenderer.send('ngx-electron-tray-apply-method', 'setToolTip', toolTip),
-                setImage: image => this.ipcRenderer.send('ngx-electron-tray-apply-method', 'setImage', image),
+                setImage: (image, isWeb) => this.ipcRenderer.send('ngx-electron-tray-apply-method', 'setImage', image, isWeb),
                 setContextMenuTemplate: this.setTrayContextMenu.bind(this)
             };
             return this._tray;
@@ -87,15 +86,15 @@ export class NgxElectronService {
         return !!(window['process'] && window['process'].type);
     }
 
-    createWindow(routerUrl: string, key: string, options: any, created: (win) => void) {
+    createWindow(routerUrl: string, key: string, options: BrowserWindowConstructorOptions, created: (win) => void) {
         let win = new this.remote.BrowserWindow({
             ...this.defaultWinOptions,
             ...options
         });
         const url = this.isServer() ? `http://${ location.hostname }:${ location.port }/#${ routerUrl }` :
-            ` ${ window['require']('url').format({
+            `${ window['require']('url').format({
                 pathname: window['require']('path').join(this.remote.app.getAppPath(),
-                    `/dist/${ this.remote.app.getName() }/index.html`),
+                    'dist' + this.remote.app.getName() + 'index.html'),
                 protocol: 'file:',
                 slashes: true
             }) }#${ routerUrl }`;
@@ -159,7 +158,7 @@ export class NgxElectronService {
      * @param created
      * @return 在electron下会返回 winId 在web下会返回 null
      */
-    openPage(routerUrl: string, options: any/*BrowserWindowConstructorOptions*/ = {}, {
+    openPage(routerUrl: string, options: BrowserWindowConstructorOptions = {}, {
         key = routerUrl,
         initData,
         webHandler = () => this.router.navigateByUrl(routerUrl),
@@ -251,11 +250,12 @@ export class NgxElectronService {
      * 设置tray菜单
      * @param template
      */
-    setTrayContextMenu(template: any[]) {
+    setTrayContextMenu(template: MenuItemConstructorOptions[]) {
         const timestamp = new Date().getTime();
         this.ipcRenderer.on(`ngx-electron-click-tray-context-menu-item-${timestamp}`, (event, i) => {
             const item = template.find((value, index) => index === i);
-            this.ngZone.run(() => setTimeout(() => item.click && item.click()));
+            this.ngZone.run(() => setTimeout(() =>
+                    item.click && item.click(null, null, null)));
         });
         // template.forEach(
         //     (currentValue, index) => this.ipcRenderer.on(`ngx-electron-click-tray-context-menu-item-${index}-${timestamp}`,

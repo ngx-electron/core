@@ -1,4 +1,4 @@
-export interface Tray {
+export interface TrayProxy {
     on(event: 'click' | 'balloon-click' | 'balloon-closed' | 'balloon-show' | 'drag-end' | 'drag-enter'
         | 'drag-leave' | 'drop', listener: Function);
 
@@ -57,9 +57,9 @@ export interface Tray {
      */
     setHighlightMode(mode: 'selection' | 'always' | 'never'): void;
     /**
-     * Sets the image associated with this tray icon.
+     * 图片可以来自于网络指定isWeb=true
      */
-    setImage(image: /*NativeImage | */string): void;
+    setImage(imageUrl: string, isWeb?: boolean): void;
     /**
      * Sets the image associated with this tray icon when pressed on macOS.
      */
