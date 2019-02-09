@@ -94,12 +94,13 @@ export class NgxElectronService {
         const url = this.isServer() ? `http://${ location.hostname }:${ location.port }/#${ routerUrl }` :
             `${ window['require']('url').format({
                 pathname: window['require']('path').join(this.remote.app.getAppPath(),
-                    'dist' + this.remote.app.getName() + 'index.html'),
+                    'dist', this.remote.app.getName(), 'index.html'),
                 protocol: 'file:',
                 slashes: true
             }) }#${ routerUrl }`;
+        console.log(`加载url:${url}`);
         win.loadURL(url);
-        if (this.isOpenDevTools()) {
+        if (this.isOpenDevTools() || true) {
             win.webContents.openDevTools();
         }
         if (this.isLoadElectronMain) {
