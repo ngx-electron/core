@@ -1,6 +1,6 @@
 {
   "name": "@ngx-electron/core",
-  "version": "0.0.5",
+  "version": "0.0.10",
   "author": {
     "name": "liangshen001",
     "email": "wangliang520wl@hotmail.com"
@@ -15,7 +15,7 @@
     "url": "git+https://github.com/ngx-electron/core.git"
   },
   "peerDependencies": {
-    "@ngx-electron/main": "0.0.4",
+    "@ngx-electron/main": "^0.0.11",
     "@angular/common": "^7.0.0",
     "@angular/core": "^7.0.0"
   },
