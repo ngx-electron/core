@@ -1,17 +1,15 @@
 import {Injectable, NgZone} from '@angular/core';
 import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
-import {TrayProxy} from '../models';
-import {IpcRenderer, WebFrame, Remote, BrowserWindowConstructorOptions, MenuItemConstructorOptions} from 'electron';
+import {ParentParams, TrayProxy} from '../models';
+import {IpcRenderer, WebFrame, Remote, BrowserWindowConstructorOptions, MenuItemConstructorOptions, BrowserWindow} from 'electron';
 import * as childProcess from 'child_process';
 import * as fs from 'fs';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting javascript file will look as if you never imported the module at all.
 
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable()
 export class NgxElectronService {
 
     ipcRenderer: IpcRenderer;
@@ -86,7 +84,7 @@ export class NgxElectronService {
         return !!(window['process'] && window['process'].type);
     }
 
-    createWindow(routerUrl: string, key: string, options: BrowserWindowConstructorOptions, created: (win) => void) {
+    createWindow(routerUrl: string, key: string, options: BrowserWindowConstructorOptions, created: (win) => void): BrowserWindow {
         let win = new this.remote.BrowserWindow({
             ...this.defaultWinOptions,
             ...options
@@ -111,7 +109,9 @@ export class NgxElectronService {
             });
         }
         win.once('ready-to-show', () => win.show());
-        created(win);
+        if (created) {
+            created(win);
+        }
         return win;
     }
 
@@ -156,25 +156,28 @@ export class NgxElectronService {
      *              数据会被json序列化，对象的方法和原型会被去除
      *              web下无影响
      * @param webHandler electron下无影响 web下的回调函数（默认行为加载routerUrl路由）
-     * @param created
+     * @param created win被创建
+     * @param parentWinKey 父窗口key
+     * @param parentWinId 父窗窗口id
      * @return 在electron下会返回 winId 在web下会返回 null
      */
     openPage(routerUrl: string, options: BrowserWindowConstructorOptions = {}, {
         key = routerUrl,
         initData,
         webHandler = () => this.router.navigateByUrl(routerUrl),
-        created = () => {}
+        created = () => {},
+        parent
     }: {
         key?: string,
         initData?: any,
         webHandler?: () => void,
-        created?: (any) => void
+        created?: (any) => void,
+        parent?: ParentParams
     } = {
         key: routerUrl,
         initData: null,
-        webHandler: () => this.router.navigateByUrl(routerUrl),
-        created: () => {}
-    }): any/*BrowserWindow*/ {
+        webHandler: () => this.router.navigateByUrl(routerUrl)
+    }): BrowserWindow {
         if (this.isElectron()) {
             // 判断主进程是否加载所需文件
             if (this.isLoadElectronMain) {
@@ -183,6 +186,15 @@ export class NgxElectronService {
                     const win = this.remote.BrowserWindow.fromId(winId);
                     win.focus();
                     return win;
+                }
+            }
+            if (parent) {
+                let parentWinId;
+                if (!parent.winId) {
+                    parentWinId = this.getWinIdByKey(parent.winKey);
+                }
+                if (parentWinId) {
+                    options.parent = this.remote.BrowserWindow.fromId(parentWinId);
                 }
             }
             const win2 = this.createWindow(routerUrl, key, options, created);
@@ -249,7 +261,7 @@ export class NgxElectronService {
     }
     /**
      * 设置tray菜单
-     * @param template
+     * @param template 1
      */
     setTrayContextMenu(template: MenuItemConstructorOptions[]) {
         const timestamp = new Date().getTime();
