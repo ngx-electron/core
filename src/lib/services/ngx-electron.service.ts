@@ -86,7 +86,7 @@ export class NgxElectronService {
         return !!(window['process'] && window['process'].type);
     }
 
-    createWindow(routerUrl: string, key: string, options: BrowserWindowConstructorOptions, created: (win) => void) {
+    createWindow(routerUrl: string, key: string, options: BrowserWindowConstructorOptions) {
         let win = new this.remote.BrowserWindow({
             ...this.defaultWinOptions,
             ...options
@@ -100,7 +100,7 @@ export class NgxElectronService {
             }) }#${ routerUrl }`;
         console.log(`加载url:${url}`);
         win.loadURL(url);
-        if (this.isOpenDevTools() || true) {
+        if (this.isOpenDevTools()) {
             win.webContents.openDevTools();
         }
         if (this.isLoadElectronMain) {
@@ -111,7 +111,6 @@ export class NgxElectronService {
             });
         }
         win.once('ready-to-show', () => win.show());
-        created(win);
         return win;
     }
 
@@ -159,21 +158,23 @@ export class NgxElectronService {
      * @param created
      * @return 在electron下会返回 winId 在web下会返回 null
      */
-    openPage(routerUrl: string, options: BrowserWindowConstructorOptions = {}, {
+    openWindow(routerUrl: string, options: BrowserWindowConstructorOptions = {}, {
         key = routerUrl,
         initData,
         webHandler = () => this.router.navigateByUrl(routerUrl),
-        created = () => {}
+        created = () => {},
+        parentKey,
+        parentId
     }: {
         key?: string,
-        initData?: any,
         webHandler?: () => void,
-        created?: (any) => void
+        initData?: any,
+        created?: (win: any) => void,
+        parentKey?: string,
+        parentId?: number
     } = {
         key: routerUrl,
-        initData: null,
-        webHandler: () => this.router.navigateByUrl(routerUrl),
-        created: () => {}
+        webHandler: () => this.router.navigateByUrl(routerUrl)
     }): any/*BrowserWindow*/ {
         if (this.isElectron()) {
             // 判断主进程是否加载所需文件
@@ -185,7 +186,22 @@ export class NgxElectronService {
                     return win;
                 }
             }
-            const win2 = this.createWindow(routerUrl, key, options, created);
+            if (!parentId) {
+                parentId = this.getWinIdByKey(parentKey);
+            }
+            if (parentId) {
+                const parentWin = this.remote.BrowserWindow.fromId(parentId);
+                if (parentWin) {
+                    options = {
+                        ...options,
+                        parent: parentWin
+                    };
+                }
+            }
+            const win2 = this.createWindow(routerUrl, key, options);
+            if (created) {
+                created(win2);
+            }
             win2.once('ready-to-show', () =>
                 win2.webContents.send('ngx-electron-core-init-data', initData));
             return win2;
