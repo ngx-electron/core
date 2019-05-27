@@ -193,7 +193,10 @@ export class NgxElectronService {
                     options.parent = this.remote.BrowserWindow.fromId(parentWinId);
                 }
             }
-            const win2 = this.createWindow(routerUrl, key, options, created);
+            const win2 = this.createWindow(routerUrl, key, options);
+            if (created) {
+                created(win2);
+            }
             win2.once('ready-to-show', () =>
                 win2.webContents.send('ngx-electron-core-init-data', initData));
             return win2;
