@@ -158,7 +158,7 @@ export class NgxElectronService {
      * @param parentWinId 父窗窗口id
      * @return 在electron下会返回 winId 在web下会返回 null
      */
-    openWindow(routerUrl: string, options: BrowserWindowConstructorOptions = {}, {
+    openPage(routerUrl: string, options: BrowserWindowConstructorOptions = {}, {
         key = routerUrl,
         initData,
         webHandler = () => this.router.navigateByUrl(routerUrl),
@@ -166,12 +166,12 @@ export class NgxElectronService {
         parent
     }: {
         key?: string,
+        initData?: any,
         webHandler?: () => void,
         created?: (any) => void,
         parent?: ParentParams
     } = {
         key: routerUrl,
-        initData: null,
         webHandler: () => this.router.navigateByUrl(routerUrl)
     }): BrowserWindow {
         if (this.isElectron()) {
